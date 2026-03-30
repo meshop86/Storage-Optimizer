@@ -1,0 +1,13 @@
+{
+  "name": "disk-cleaner-ui",
+  "version": "1.0.0",
+  "description": "macOS Disk Manager — Smart Storage Optimizer",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.0"
+  }
+}
