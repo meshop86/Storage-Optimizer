@@ -776,6 +776,227 @@ app.get("/api/open-folder", (req, res) => {
   res.json({ success: true });
 });
 
+// ─── PORTS ───────────────────────────────────────────────────────────────────
+
+const KNOWN_PORTS = {
+  80:{name:"HTTP",cat:"web",icon:"🌐",desc:"Web server không mã hóa",risk:"low"},
+  443:{name:"HTTPS",cat:"web",icon:"🔒",desc:"Web server SSL/TLS",risk:"low"},
+  8080:{name:"HTTP-Alt",cat:"dev",icon:"🌐",desc:"HTTP alternative port",risk:"low"},
+  3000:{name:"Node/React",cat:"dev",icon:"⚛️",desc:"Node.js/React dev server",risk:"low"},
+  3001:{name:"Dev Server",cat:"dev",icon:"⚛️",desc:"Dev server alternative",risk:"low"},
+  4200:{name:"Angular",cat:"dev",icon:"🔴",desc:"Angular CLI dev server",risk:"low"},
+  5173:{name:"Vite",cat:"dev",icon:"⚡",desc:"Vite bundler dev server",risk:"low"},
+  5000:{name:"Flask/Dev",cat:"dev",icon:"🐍",desc:"Python Flask / generic dev",risk:"low"},
+  7788:{name:"Disk Manager",cat:"dev",icon:"💾",desc:"Disk Manager UI — ứng dụng này",risk:"low"},
+  8000:{name:"Django/Dev",cat:"dev",icon:"🐍",desc:"Django dev server",risk:"low"},
+  8888:{name:"Jupyter",cat:"dev",icon:"📓",desc:"Jupyter Notebook/Lab",risk:"low"},
+  8501:{name:"Streamlit",cat:"dev",icon:"🚀",desc:"Streamlit Python app",risk:"low"},
+  3306:{name:"MySQL",cat:"db",icon:"🐬",desc:"MySQL / MariaDB",risk:"low"},
+  5432:{name:"PostgreSQL",cat:"db",icon:"🐘",desc:"PostgreSQL database",risk:"low"},
+  27017:{name:"MongoDB",cat:"db",icon:"🍃",desc:"MongoDB NoSQL",risk:"low"},
+  6379:{name:"Redis",cat:"db",icon:"⚡",desc:"Redis cache / message broker",risk:"low"},
+  9200:{name:"Elasticsearch",cat:"db",icon:"🔍",desc:"Elasticsearch",risk:"low"},
+  22:{name:"SSH",cat:"system",icon:"🔐",desc:"Secure Shell — truy cập terminal từ xa",risk:"medium"},
+  23:{name:"Telnet",cat:"system",icon:"☠️",desc:"TELNET — KHÔNG mã hóa! Nguy hiểm",risk:"high"},
+  21:{name:"FTP",cat:"system",icon:"📂",desc:"File Transfer Protocol — không mã hóa",risk:"medium"},
+  3389:{name:"RDP",cat:"system",icon:"🖥️",desc:"Windows Remote Desktop",risk:"medium"},
+  5900:{name:"VNC",cat:"system",icon:"🖥️",desc:"Virtual Network Computing",risk:"medium"},
+  445:{name:"SMB",cat:"system",icon:"📁",desc:"Windows file sharing (SMB/CIFS)",risk:"medium"},
+  2375:{name:"Docker",cat:"dev",icon:"🐳",desc:"Docker daemon API — KHÔNG mã hóa! Nguy hiểm",risk:"high"},
+  2376:{name:"Docker-TLS",cat:"dev",icon:"🐳",desc:"Docker daemon API với TLS",risk:"low"},
+  5672:{name:"RabbitMQ",cat:"service",icon:"🐇",desc:"RabbitMQ AMQP message broker",risk:"low"},
+  9092:{name:"Kafka",cat:"service",icon:"📨",desc:"Apache Kafka event streaming",risk:"low"},
+};
+
+const RISK_CFG = {
+  high:   { label:"☠ NGUY HIỂM", color:"#ff453a" },
+  medium: { label:"⚡ CẨN THẬN", color:"#ff9f0a" },
+  low:    { label:"✓ AN TOÀN",   color:"#30d158" },
+  unknown:{ label:"? UNKNOWN",   color:"#636366" },
+};
+
+function enrichPort(port, pid, cmd, proto, addr) {
+  const k = KNOWN_PORTS[port];
+  const risk = k ? (k.risk||"low") : (port < 1024 ? "medium" : "unknown");
+  return { port, pid, cmd, proto, addr,
+    name: k?.name || cmd || "Unknown",
+    desc: k?.desc || `Process ${cmd||"?"} (port ${port})`,
+    icon: k?.icon || "🔌", cat: k?.cat || "unknown", risk,
+    riskLabel: RISK_CFG[risk]?.label || "?",
+    riskColor: RISK_CFG[risk]?.color || "#636366",
+    isLocal: ["127.0.0.1","::1","localhost","[::1]","::ffff:127.0.0.1"].includes(addr),
+  };
+}
+
+function scanPortsMac() {
+  return new Promise(r => {
+    exec(`lsof -iTCP -n -P 2>/dev/null | grep LISTEN; lsof -iUDP -n -P 2>/dev/null | grep -v "^COMMAND"`, (e, o) => {
+      const seen = new Set(), ports = [];
+      (o||"").trim().split("\n").filter(Boolean).forEach(line => {
+        const p = line.trim().split(/\s+/); if (p.length < 9) return;
+        const cmd=p[0], pid=parseInt(p[1]), protoFull=p[7], name=p[8];
+        const proto = protoFull.startsWith("TCP") ? "TCP" : "UDP";
+        const m = name.match(/^([^:]+):(\d+)(?:\s*\((\w+)\))?$/);
+        if (!m) return;
+        const addr = m[1]==="*" ? "0.0.0.0" : m[1], port = parseInt(m[2]), st = m[3]||"";
+        if (proto==="TCP" && st!=="LISTEN") return;
+        const key = `${proto}:${port}`; if (seen.has(key)) return; seen.add(key);
+        if (!isNaN(port) && port > 0) ports.push(enrichPort(port, pid, cmd, proto, addr));
+      });
+      r(ports.sort((a,b) => a.port - b.port));
+    });
+  });
+}
+
+function scanPortsWin() {
+  return new Promise(r => {
+    const ps = `$r=@();Get-NetTCPConnection -State Listen -EA SilentlyContinue|ForEach-Object{$p=Get-Process -Id $_.OwningProcess -EA SilentlyContinue;$r+=[PSCustomObject]@{port=$_.LocalPort;addr=$_.LocalAddress;pid=$_.OwningProcess;cmd=if($p){$p.Name}else{'?'};proto='TCP'}};$r|Sort-Object port|ConvertTo-Json -Compress`;
+    exec(`powershell -NoProfile -Command "${ps}"`, (e, o) => {
+      try {
+        let raw = JSON.parse(o); if (!Array.isArray(raw)) raw=[raw];
+        const seen = new Set();
+        r(raw.filter(x=>{ const k=`${x.proto}:${x.port}`; if(seen.has(k)) return false; seen.add(k); return true; })
+          .map(x => enrichPort(x.port, x.pid, x.cmd, x.proto, x.addr||"0.0.0.0")));
+      } catch { r([]); }
+    });
+  });
+}
+
+app.get("/api/ports", async (_, res) => {
+  res.json({ success: true, data: IS_WIN ? await scanPortsWin() : await scanPortsMac() });
+});
+
+app.post("/api/kill-pid", (req, res) => {
+  const { pid, admin=false } = req.body;
+  if (!pid || isNaN(pid)) return res.status(400).json({ error: "Invalid PID" });
+  setupSSE(res);
+  sseWrite(res, { type:"start", message:`⚡ Kill PID ${pid}...` });
+  const cmd = admin
+    ? (IS_WIN
+        ? `powershell -Command "Start-Process cmd -Verb RunAs -ArgumentList '/c taskkill /PID ${pid} /F' -Wait -WindowStyle Hidden"`
+        : `osascript -e 'do shell script "kill -9 ${pid}" with administrator privileges'`)
+    : (IS_WIN ? `taskkill /PID ${pid} /F` : `kill -9 ${pid}`);
+  exec(cmd, err => {
+    if (err) {
+      const needsAdmin = !admin && (err.message.includes("Operation not permitted") || err.message.includes("Access is denied"));
+      sseWrite(res, { type:"error", message:`❌ ${err.message}`, needsAdmin, pid });
+    } else {
+      sseWrite(res, { type:"success", message:`✅ PID ${pid} đã kill thành công!`, pid });
+    }
+    sseWrite(res, { type:"done" }); res.end();
+  });
+});
+
+// ─── MONITOR ─────────────────────────────────────────────────────────────────
+
+let _prevCpu = null;
+function cpuPercent() {
+  const curr = os.cpus();
+  if (!_prevCpu) { _prevCpu = curr.map(c => ({...c.times})); return 0; }
+  let tot = 0, idl = 0;
+  curr.forEach((c, i) => {
+    const p = _prevCpu[i];
+    const cv = Object.values(c.times).reduce((a,b)=>a+b,0);
+    const pv = Object.values(p).reduce((a,b)=>a+b,0);
+    tot += cv - pv; idl += c.times.idle - p.idle;
+  });
+  _prevCpu = curr.map(c => ({...c.times}));
+  return tot > 0 ? Math.max(0, Math.min(100, (1 - idl/tot) * 100)) : 0;
+}
+
+function ramInfo() {
+  const total = os.totalmem();
+  if (IS_MAC) {
+    return new Promise(resolve => {
+      exec("vm_stat", (err, out) => {
+        if (err) { const f=os.freemem(); return resolve({total,free:f,used:total-f,pct:Math.round((total-f)/total*100)}); }
+        const ps = parseInt((out.match(/page size of (\d+)/)||[])[1]) || 16384;
+        const get = k => (parseInt((out.match(new RegExp(k+":\\s*(\\d+)"))||[])[1])||0)*ps;
+        const free = get("Pages free") + get("Pages inactive") + get("Pages speculative");
+        const used = Math.max(0, total - free);
+        resolve({ total, free: Math.min(free,total), used, pct: Math.round(used/total*100) });
+      });
+    });
+  }
+  if (IS_WIN) {
+    return new Promise(resolve => {
+      exec(`powershell -NoProfile -Command "(Get-CimInstance Win32_OperatingSystem).FreePhysicalMemory"`, (err, out) => {
+        if (err) { const f=os.freemem(); return resolve({total,free:f,used:total-f,pct:Math.round((total-f)/total*100)}); }
+        const free = (parseInt(out.trim())||0) * 1024;
+        const used = Math.max(0, total - free);
+        resolve({ total, free, used, pct: Math.round(used/total*100) });
+      });
+    });
+  }
+  const f = os.freemem(), u = total - f;
+  return Promise.resolve({ total, free:f, used:u, pct: Math.round(u/total*100) });
+}
+
+function topProcs() {
+  return new Promise(r => {
+    if (IS_WIN) {
+      const ps = `Get-Process|Sort-Object CPU -Desc|Select-Object -First 20|ForEach-Object{[PSCustomObject]@{pid=$_.Id;name=$_.Name;cpu=[math]::Round($_.CPU/10,1);ram=[math]::Round($_.WorkingSet/1MB,0)}}|ConvertTo-Json -Compress`;
+      exec(`powershell -NoProfile -Command "${ps}"`, (e,o) => { try{let d=JSON.parse(o);r(Array.isArray(d)?d:[d]);}catch{r([]);} });
+    } else {
+      exec(`ps -A -o pid=,pcpu=,rss=,comm= 2>/dev/null | sort -rn -k2 | head -25`, (e, o) => {
+        const list = (o||"").trim().split("\n").filter(Boolean).map(l => {
+          const p = l.trim().split(/\s+/); if (p.length < 3) return null;
+          return { pid:parseInt(p[0]), cpu:parseFloat(p[1]), ram:Math.round(parseInt(p[2])/1024), name:(p.slice(3).join(" ")||"").split("/").pop().slice(0,30) };
+        }).filter(Boolean);
+        r(list);
+      });
+    }
+  });
+}
+
+app.get("/api/resources/stream", (req, res) => {
+  setupSSE(res);
+  let tick = 0;
+  const push = async () => {
+    const cpu = cpuPercent(), ram = await ramInfo();
+    const payload = { cpu: Math.round(cpu*10)/10, ram, ts: Date.now() };
+    if (tick % 4 === 0) { payload.processes = await topProcs(); }
+    tick++;
+    try { sseWrite(res, payload); } catch {}
+  };
+  push();
+  const iv = setInterval(push, 1000);
+  req.on("close", () => clearInterval(iv));
+});
+
+app.get("/api/top-processes", async (_, res) => {
+  res.json({ success:true, data: await topProcs() });
+});
+
+// ─── TRAY ────────────────────────────────────────────────────────────────────
+
+const { spawn: spawnProc } = require("child_process");
+let _trayProc = null;
+function trayRunning() { return _trayProc !== null && !_trayProc.killed; }
+
+app.get("/api/tray/status", (_, res) => {
+  res.json({ running: trayRunning() });
+});
+
+app.post("/api/tray/start", (_, res) => {
+  if (trayRunning()) return res.json({ ok:true, msg:"already running" });
+  const trayScript = path.join(__dirname, "tray.js");
+  _trayProc = spawnProc("node", [trayScript], {
+    stdio:"ignore", detached:true,
+    env: { ...process.env, PORT: String(PORT) },
+    ...(IS_WIN ? { windowsHide:true } : {}),
+  });
+  _trayProc.unref();
+  _trayProc.on("exit", () => { _trayProc = null; });
+  setTimeout(() => res.json({ ok:true, msg: trayRunning() ? "started" : "started (detached)" }), 500);
+});
+
+app.post("/api/tray/stop", (_, res) => {
+  if (!trayRunning()) return res.json({ ok:true, msg:"not running" });
+  _trayProc.kill("SIGTERM"); _trayProc = null;
+  res.json({ ok:true, msg:"stopped" });
+});
+
 // ─── START ───────────────────────────────────────────────────────────────────
 
 app.listen(PORT, () => {
