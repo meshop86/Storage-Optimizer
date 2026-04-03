@@ -37,16 +37,12 @@ PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=dialog
 OutputDir=output
 OutputBaseFilename=StorageOptimizer-Setup-v{#AppVersion}
-SetupIconFile=..\public\favicon.ico
 Compression=lzma2/ultra64
 SolidCompression=yes
 WizardStyle=modern
 WizardSizePercent=120
-; Màu sắc giao diện (tối giống app)
-WizardImageFile=wizard_banner.bmp
-WizardSmallImageFile=wizard_icon.bmp
 UninstallDisplayName={#AppName}
-UninstallDisplayIcon={app}\icon.ico
+UninstallDisplayIcon={sys}\shell32.dll,174
 
 [Languages]
 Name: "vietnamese"; MessagesFile: "compiler:Languages\Default.isl"
@@ -78,15 +74,12 @@ Source: "..\public\*";         DestDir: "{app}\public";   Flags: ignoreversion r
 ; Launch wrapper exe (tạo từ start.bat)
 Source: "launcher\StorageOptimizer.exe"; DestDir: "{app}"; Flags: ignoreversion; Check: FileExists(ExpandConstant('{src}\launcher\StorageOptimizer.exe'))
 
-; Icon
-Source: "..\public\favicon.ico"; DestDir: "{app}"; DestName: "icon.ico"; Flags: ignoreversion; Check: FileExists(ExpandConstant('{src}\..\public\favicon.ico'))
-
 [Icons]
 ; Desktop shortcut
-Name: "{userdesktop}\{#AppName}"; Filename: "{app}\start.bat"; WorkingDir: "{app}"; IconFilename: "{app}\icon.ico"; Comment: "Storage Optimizer - Phân tích và dọn dẹp ổ đĩa"; Tasks: desktopicon
+Name: "{userdesktop}\{#AppName}"; Filename: "{app}\start.bat"; WorkingDir: "{app}"; IconFilename: "{sys}\shell32.dll"; IconIndex: 174; Comment: "Storage Optimizer - Phân tích và dọn dẹp ổ đĩa"; Tasks: desktopicon
 
 ; Start Menu
-Name: "{group}\{#AppName}"; Filename: "{app}\start.bat"; WorkingDir: "{app}"; IconFilename: "{app}\icon.ico"; Comment: "Storage Optimizer - Phân tích và dọn dẹp ổ đĩa"; Tasks: startmenuicon
+Name: "{group}\{#AppName}"; Filename: "{app}\start.bat"; WorkingDir: "{app}"; IconFilename: "{sys}\shell32.dll"; IconIndex: 174; Comment: "Storage Optimizer - Phân tích và dọn dẹp ổ đĩa"; Tasks: startmenuicon
 Name: "{group}\Gỡ cài đặt {#AppName}"; Filename: "{uninstallexe}"
 
 [Run]
