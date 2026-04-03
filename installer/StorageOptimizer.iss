@@ -45,22 +45,20 @@ UninstallDisplayName={#AppName}
 UninstallDisplayIcon={sys}\shell32.dll,174
 
 [Languages]
-Name: "english"; MessagesFile: "compiler:Default.isl"
+Name: "en"; MessagesFile: "compiler:Default.isl"
 
 [CustomMessages]
-vietnamese.WelcomeLabel1=Chào mừng bạn đến với Storage Optimizer!
-vietnamese.WelcomeLabel2=Trình cài đặt sẽ:%n%n• Kiểm tra và cài Node.js nếu cần%n• Cài đặt Storage Optimizer%n• Tạo shortcut trên Desktop%n%nNhấn Tiếp tục để bắt đầu.
-CheckingNode=Đang kiểm tra Node.js...
-InstallingNode=Đang cài đặt Node.js (có thể mất 2-3 phút)...
-NodeInstallFailed=Không thể cài Node.js. Vui lòng cài thủ công tại nodejs.org
+CheckingNode=Dang kiem tra Node.js...
+InstallingNode=Dang cai dat Node.js (co the mat 2-3 phut)...
+NodeInstallFailed=Khong the cai Node.js. Vui long cai thu cong tai nodejs.org
 InstallingDeps=Đang cài đặt dependencies...
-CreatingShortcut=Đang tạo shortcut Desktop...
-LaunchNow=Chạy Storage Optimizer ngay bây giờ
-CreateDesktopShortcut=Tạo shortcut trên màn hình Desktop
+CreatingShortcut=Creating Desktop shortcut...
+LaunchNow=Launch Storage Optimizer now
+CreateDesktopShortcut=Create a Desktop shortcut
 
 [Tasks]
-Name: "desktopicon"; Description: "{cm:CreateDesktopShortcut}"; GroupDescription: "Tùy chọn:"; Flags: checked
-Name: "startmenuicon"; Description: "Tạo shortcut trong Start Menu"; GroupDescription: "Tùy chọn:"; Flags: checked
+Name: "desktopicon"; Description: "{cm:CreateDesktopShortcut}"; GroupDescription: "Options:"; Flags: checked
+Name: "startmenuicon"; Description: "Create Start Menu shortcut"; GroupDescription: "Options:"; Flags: checked
 
 [Files]
 ; Toàn bộ source code (trừ node_modules và thư mục installer)
@@ -76,17 +74,14 @@ Source: "launcher\StorageOptimizer.exe"; DestDir: "{app}"; Flags: ignoreversion;
 
 [Icons]
 ; Desktop shortcut
-Name: "{userdesktop}\{#AppName}"; Filename: "{app}\start.bat"; WorkingDir: "{app}"; IconFilename: "{sys}\shell32.dll"; IconIndex: 174; Comment: "Storage Optimizer - Phân tích và dọn dẹp ổ đĩa"; Tasks: desktopicon
+Name: "{userdesktop}\{#AppName}"; Filename: "{app}\start.bat"; WorkingDir: "{app}"; IconFilename: "{sys}\shell32.dll"; IconIndex: 174; Comment: "Storage Optimizer - Disk analysis and cleanup"; Tasks: desktopicon
 
-; Start Menu
-Name: "{group}\{#AppName}"; Filename: "{app}\start.bat"; WorkingDir: "{app}"; IconFilename: "{sys}\shell32.dll"; IconIndex: 174; Comment: "Storage Optimizer - Phân tích và dọn dẹp ổ đĩa"; Tasks: startmenuicon
-Name: "{group}\Gỡ cài đặt {#AppName}"; Filename: "{uninstallexe}"
+Name: "{group}\{#AppName}"; Filename: "{app}\start.bat"; WorkingDir: "{app}"; IconFilename: "{sys}\shell32.dll"; IconIndex: 174; Comment: "Storage Optimizer - Disk analysis and cleanup"; Tasks: startmenuicon
+Name: "{group}\Uninstall {#AppName}"; Filename: "{uninstallexe}"
 
 [Run]
-; Cài npm dependencies sau khi copy files
-Filename: "cmd.exe"; Parameters: "/c cd /d ""{app}"" && npm install --silent"; StatusMsg: "{cm:InstallingDeps}"; Flags: runhidden waituntilterminated
+Filename: "cmd.exe"; Parameters: "/c cd /d ""{app}"" && npm install"; StatusMsg: "Installing dependencies..."; Flags: runhidden waituntilterminated
 
-; Hỏi có muốn chạy ngay không
 Filename: "{app}\start.bat"; Description: "{cm:LaunchNow}"; WorkingDir: "{app}"; Flags: postinstall nowait skipifsilent
 
 [UninstallDelete]

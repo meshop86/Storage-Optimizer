@@ -1,136 +1,147 @@
 @echo off
-:: ─────────────────────────────────────────────────────────────────────────────
-::  Storage Optimizer — Windows Launcher
-::  Tự động cài Node.js nếu chưa có, rồi khởi động ứng dụng
-::  Usage: Double-click start.bat (hoặc chạy trong Command Prompt)
-:: ─────────────────────────────────────────────────────────────────────────────
-
-chcp 65001 > nul
-title Storage Optimizer — Đang khởi động...
+setlocal EnableDelayedExpansion
+chcp 65001 > nul 2>&1
+title Storage Optimizer
 
 echo.
-echo   ╔══════════════════════════════════════════════╗
-echo   ║   🖥️  Storage Optimizer — Windows            ║
-echo   ║   Phân tích  •  Dọn dẹp  •  Quản lý ổ đĩa  ║
-echo   ╚══════════════════════════════════════════════╝
+echo  ================================================
+echo    Storage Optimizer - Windows
+echo    Phan tich, don dep va quan ly o dia
+echo  ================================================
 echo.
 
-:: ── Kiểm tra Node.js ──────────────────────────────────────────────────────────
+:: ── Kiem tra Node.js ─────────────────────────────────────────────────────────
 where node > nul 2>&1
 if %errorlevel% neq 0 (
-    echo   [!] Node.js chưa được cài đặt.
-    echo   [>>] Đang tự động tải và cài đặt Node.js LTS...
+    echo  [!] Node.js chua duoc cai dat.
+    echo  [>>] Dang tu dong tai va cai dat Node.js LTS...
     echo.
     call :INSTALL_NODE
-    if %errorlevel% neq 0 (
-        echo   [X] Cài đặt Node.js thất bại.
-        echo       Vui lòng tải thủ công tại: https://nodejs.org
+    if !INSTALL_RESULT! neq 0 (
+        echo.
+        echo  [X] Cai dat Node.js that bai.
+        echo      Vui long tai thu cong tai: https://nodejs.org
+        echo.
         pause
         exit /b 1
     )
+    echo  [OK] Node.js da duoc cai dat thanh cong!
+    echo.
 )
 
-:: Refresh PATH sau khi cài mới
+:: Them nodejs vao PATH phong khi vua cai xong
 set "PATH=%PATH%;C:\Program Files\nodejs;%APPDATA%\npm"
 
-:: Verify lại
+:: Verify
 where node > nul 2>&1
 if %errorlevel% neq 0 (
-    echo   [!] Node.js đã cài nhưng cần khởi động lại máy tính để áp dụng PATH.
-    echo   Vui lòng khởi động lại rồi chạy lại file này.
+    echo  [!] Can khoi dong lai may tinh de ap dung PATH moi.
+    echo      Sau khi restart, chay lai file nay.
     pause
     exit /b 1
 )
 
-for /f "tokens=*" %%v in ('node --version') do set NODE_VER=%%v
-echo   [OK] Node.js %NODE_VER% sẵn sàng
+for /f "tokens=*" %%v in ('node --version 2^>nul') do set NODE_VER=%%v
+echo  [OK] Node.js !NODE_VER! san sang
 
-:: ── Cài dependencies nếu chưa có ─────────────────────────────────────────────
+:: ── Cai npm dependencies neu chua co ─────────────────────────────────────────
 if not exist "%~dp0node_modules\" (
-    echo   [..] Đang cài đặt dependencies lần đầu...
+    echo  [..] Dang cai dependencies lan dau...
     cd /d "%~dp0"
-    npm install --silent
-    if %errorlevel% neq 0 (
-        echo   [X] npm install thất bại. Kiểm tra kết nối mạng.
+    npm install
+    if !errorlevel! neq 0 (
+        echo  [X] npm install that bai. Kiem tra ket noi mang.
         pause
         exit /b 1
     )
-    echo   [OK] Dependencies đã cài xong
+    echo  [OK] Dependencies da cai xong
 )
 
-:: ── Tạo shortcut trên Desktop (nếu chưa có) ─────────────────────────────────
-call :CREATE_SHORTCUT
+:: ── Tao shortcut Desktop neu chua co ─────────────────────────────────────────
+set "SHORTCUT=%USERPROFILE%\Desktop\Storage Optimizer.lnk"
+if not exist "%SHORTCUT%" (
+    echo  [>>] Tao shortcut tren Desktop...
+    set "BATPATH=%~dpnx0"
+    set "WORKDIR=%~dp0"
+    powershell -NoProfile -ExecutionPolicy Bypass -Command "$ws=New-Object -ComObject WScript.Shell; $s=$ws.CreateShortcut('!SHORTCUT!'); $s.TargetPath='!BATPATH!'; $s.WorkingDirectory='!WORKDIR!'; $s.Description='Storage Optimizer'; $s.IconLocation='%SystemRoot%\System32\shell32.dll,174'; $s.Save()" > nul 2>&1
+    if !errorlevel! equ 0 echo  [OK] Shortcut da tao tren Desktop
+)
 
-:: ── Dừng tiến trình cũ trên cổng 7788 ───────────────────────────────────────
-for /f "tokens=5" %%a in ('netstat -aon ^| findstr ":7788 " 2^>nul') do (
+:: ── Dung tien trinh cu tren cong 7788 ────────────────────────────────────────
+for /f "tokens=5" %%a in ('netstat -ano 2^>nul ^| findstr /R ":7788 "') do (
     taskkill /f /pid %%a > nul 2>&1
 )
 
-:: ── Khởi động server ──────────────────────────────────────────────────────────
-title Storage Optimizer — http://localhost:7788
+:: ── Khoi dong server ──────────────────────────────────────────────────────────
+title Storage Optimizer - http://localhost:7788
 echo.
-echo   ════════════════════════════════════════════
-echo   [>>] Server đang chạy tại http://localhost:7788
-echo   [>>] Mở trình duyệt...
-echo   Nhấn Ctrl+C để dừng.
-echo   ════════════════════════════════════════════
+echo  ================================================
+echo   [>>] Server: http://localhost:7788
+echo   Nhan Ctrl+C de dung.
+echo  ================================================
 echo.
 
-:: Mở trình duyệt sau 2 giây
 timeout /t 2 /nobreak > nul
 start "" "http://localhost:7788"
 
 cd /d "%~dp0"
 node server.js
 
+echo.
 pause
 exit /b 0
 
-:: ═════════════════════════════════════════════════════════════════════════════
-:: SUBROUTINE: Tự động cài Node.js bằng PowerShell
-:: ═════════════════════════════════════════════════════════════════════════════
-:INSTALL_NODE
-echo   [1/3] Đang kiểm tra phiên bản Node.js mới nhất...
 
-:: Tải Node.js LTS Installer
-set "NODE_MSI=%TEMP%\nodejs_installer.msi"
+:: =============================================================================
+:INSTALL_NODE
+set INSTALL_RESULT=0
+set "NODE_MSI=%TEMP%\nodejs_lts_installer.msi"
 set "NODE_URL=https://nodejs.org/dist/v22.14.0/node-v22.14.0-x64.msi"
 
-echo   [2/3] Đang tải Node.js LTS (v22 LTS) từ nodejs.org...
-echo         URL: %NODE_URL%
-echo.
+echo  [1/3] Chuan bi tai Node.js v22 LTS...
 
-powershell -NoProfile -ExecutionPolicy Bypass -Command ^
-  "try { $ProgressPreference='SilentlyContinue'; Invoke-WebRequest -Uri '%NODE_URL%' -OutFile '%NODE_MSI%' -UseBasicParsing; Write-Host '[OK] Tải xong' } catch { Write-Host '[X] Lỗi tải: ' + $_.Exception.Message; exit 1 }"
+set "PS1=%TEMP%\dl_node.ps1"
+(
+echo $ProgressPreference = 'SilentlyContinue'
+echo try {
+echo     Invoke-WebRequest -Uri '%NODE_URL%' -OutFile '%NODE_MSI%' -UseBasicParsing
+echo     Write-Host '[OK] Tai xong'
+echo     exit 0
+echo } catch {
+echo     Write-Host "[X] Loi: $($_.Exception.Message)"
+echo     exit 1
+echo }
+) > "%PS1%"
 
-if %errorlevel% neq 0 (
-    echo   [X] Không thể tải Node.js. Kiểm tra kết nối mạng.
+echo  [2/3] Dang tai Node.js tu nodejs.org...
+echo        (File ~30MB, co the mat vai phut)
+powershell -NoProfile -ExecutionPolicy Bypass -File "%PS1%"
+set DL_ERR=%errorlevel%
+del "%PS1%" > nul 2>&1
+
+if %DL_ERR% neq 0 (
+    echo  [X] Khong the tai Node.js. Kiem tra ket noi mang.
+    set INSTALL_RESULT=1
     exit /b 1
 )
 
-echo   [3/3] Đang cài đặt Node.js (có thể mất 1-2 phút)...
-msiexec /i "%NODE_MSI%" /quiet /norestart ADDLOCAL=ALL
-set INSTALL_ERR=%errorlevel%
+if not exist "%NODE_MSI%" (
+    echo  [X] File tai ve khong ton tai.
+    set INSTALL_RESULT=1
+    exit /b 1
+)
 
-:: Dọn file tạm
+echo  [3/3] Dang cai dat Node.js (co the mat 1-2 phut)...
+msiexec /i "%NODE_MSI%" /quiet /norestart ADDLOCAL=ALL
+set MSI_ERR=%errorlevel%
 del "%NODE_MSI%" > nul 2>&1
 
-if %INSTALL_ERR% neq 0 (
-    echo   [X] Cài đặt thất bại. Thử chạy lại với quyền Administrator.
+if %MSI_ERR% neq 0 (
+    echo  [X] Cai dat that bai (ma loi: %MSI_ERR%).
+    echo      Thu chay lai bang quyen Administrator.
+    set INSTALL_RESULT=1
     exit /b 1
 )
 
-echo   [OK] Node.js đã được cài đặt thành công!
-exit /b 0
-
-:: ═════════════════════════════════════════════════════════════════════════════
-:: SUBROUTINE: Tạo shortcut Desktop
-:: ═════════════════════════════════════════════════════════════════════════════
-:CREATE_SHORTCUT
-set "SHORTCUT=%USERPROFILE%\Desktop\Storage Optimizer.lnk"
-if exist "%SHORTCUT%" exit /b 0
-
-echo   [>>] Đang tạo shortcut trên Desktop...
-powershell -NoProfile -ExecutionPolicy Bypass -Command ^
-  "$ws = New-Object -ComObject WScript.Shell; $s = $ws.CreateShortcut('%SHORTCUT%'); $s.TargetPath = '%~dpnx0'; $s.WorkingDirectory = '%~dp0'; $s.Description = 'Storage Optimizer - Phan tich va don dep o dia'; $s.IconLocation = 'shell32.dll,174'; $s.Save(); Write-Host '[OK] Shortcut da tao tai Desktop'"
+set INSTALL_RESULT=0
 exit /b 0
