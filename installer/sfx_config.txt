@@ -1,0 +1,4 @@
+Path=%LOCALAPPDATA%\Programs\Storage Optimizer
+Setup=install.bat
+Overwrite=1
+Title=Storage Optimizer v2.0.0 - Cai dat

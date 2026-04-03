@@ -1,0 +1,5 @@
+//start server - copy lệnh dưới terminal
+
+pkill -f "node server.js" 2>/dev/null; sleep 0.5
+cd /Volumes/Data/Project/disk-cleaner && node server.js &
+sleep 1.5 && curl -s http://localhost:7788/ | grep -c "execDlg" && echo "Server OK"
