@@ -57,8 +57,8 @@ LaunchNow=Launch Storage Optimizer now
 CreateDesktopShortcut=Create a Desktop shortcut
 
 [Tasks]
-Name: "desktopicon"; Description: "{cm:CreateDesktopShortcut}"; GroupDescription: "Options:"; Flags: checked
-Name: "startmenuicon"; Description: "Create Start Menu shortcut"; GroupDescription: "Options:"; Flags: checked
+Name: "desktopicon"; Description: "{cm:CreateDesktopShortcut}"; GroupDescription: "Options:"
+Name: "startmenuicon"; Description: "Create Start Menu shortcut"; GroupDescription: "Options:"
 
 [Files]
 ; Toàn bộ source code (trừ node_modules và thư mục installer)
