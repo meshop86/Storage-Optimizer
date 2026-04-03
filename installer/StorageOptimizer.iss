@@ -45,7 +45,7 @@ UninstallDisplayName={#AppName}
 UninstallDisplayIcon={sys}\shell32.dll,174
 
 [Languages]
-Name: "vietnamese"; MessagesFile: "compiler:Languages\Default.isl"
+Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [CustomMessages]
 vietnamese.WelcomeLabel1=Chào mừng bạn đến với Storage Optimizer!
