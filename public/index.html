@@ -335,9 +335,6 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;heigh
     <button class="tab-btn" onclick="switchTab('about',this)" id="tab-about">
       ℹ️ <span class="tab-label" data-i18n="tabAbout">Giới thiệu</span>
     </button>
-    <button class="tab-btn" onclick="switchTab('license',this)" id="tab-license" style="margin-left:auto">
-      🔑 <span class="tab-label">License</span>
-    </button>
   </nav>
 
   <div class="topbar-right">
@@ -369,6 +366,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;heigh
       <button class="chip" onclick="setFilter('dev',this)" data-i18n="filterDev">🔧 Dev Tools</button>
       <button class="chip" onclick="setFilter('app',this)">💻 Apps</button>
       <button class="chip" onclick="setFilter('mobile',this)">📱 iTunes &amp; 3uTools</button>
+      <button class="chip" onclick="setFilter('zalo',this)">💬 Zalo</button>
     </div>
     <div id="items-area">
       <div class="empty-state"><div class="es-icon">🔍</div><div class="es-title" data-i18n="notScanned">Chưa quét</div></div>
@@ -545,63 +543,63 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;heigh
       <strong>MIT License</strong> — <span data-i18n="licenseText">Mã nguồn mở, miễn phí sử dụng và chỉnh sửa.</span><br>
       <span style="color:var(--text-dimmer);font-size:11px">Storage Optimizer v2.0 · github.com/meshop86/Storage-Optimizer</span>
     </div>
-  </div>
-</div>
 
-<!-- ═══════════════════════════════════════ TAB: LICENSE ════ -->
-<div class="tab-panel" id="panel-license">
-<div class="lic-wrap">
+    <!-- ─── LICENSE SECTION ─────────────────────────────────────── -->
+    <div style="margin-top:28px">
+      <div class="section-hdr" style="margin:0 0 16px"><span style="color:var(--blue)">🔑 License</span></div>
 
-  <!-- Hero card -->
-  <div class="lic-hero" id="lic-hero">
-    <div class="lic-icon" id="lic-icon">⏳</div>
-    <div class="lic-status-label" id="lic-status-label">Đang tải...</div>
-    <div class="lic-days" id="lic-days">—</div>
-    <div class="lic-days-sub" id="lic-days-sub">ngày còn lại</div>
-    <div class="lic-expiry-bar-wrap"><div class="lic-expiry-bar" id="lic-expiry-bar" style="width:100%;background:var(--blue)"></div></div>
-    <div><span class="lic-badge trial" id="lic-badge">⏳ Dùng thử</span></div>
-  </div>
+      <!-- Hero card -->
+      <div class="lic-hero" id="lic-hero">
+        <div class="lic-icon" id="lic-icon">⏳</div>
+        <div class="lic-status-label" id="lic-status-label">Đang tải...</div>
+        <div class="lic-days" id="lic-days">—</div>
+        <div class="lic-days-sub" id="lic-days-sub">ngày còn lại</div>
+        <div class="lic-expiry-bar-wrap"><div class="lic-expiry-bar" id="lic-expiry-bar" style="width:100%;background:var(--blue)"></div></div>
+        <div><span class="lic-badge trial" id="lic-badge">⏳ Dùng thử</span></div>
+      </div>
 
-  <!-- Info grid -->
-  <div class="lic-info-grid">
-    <div class="lic-info-box">
-      <div class="lic-info-label">Loại license</div>
-      <div class="lic-info-val" id="lic-type">—</div>
+      <!-- Info grid -->
+      <div class="lic-info-grid">
+        <div class="lic-info-box">
+          <div class="lic-info-label">Loại license</div>
+          <div class="lic-info-val" id="lic-type">—</div>
+        </div>
+        <div class="lic-info-box">
+          <div class="lic-info-label">Hết hạn ngày</div>
+          <div class="lic-info-val" id="lic-expiry">—</div>
+        </div>
+        <div class="lic-info-box" style="grid-column:1/-1">
+          <div class="lic-info-label">Machine ID (gửi cho nhà phát triển để nhận key)</div>
+          <div class="lic-info-val" id="lic-machine" style="font-size:11px;color:var(--text-dim)">—</div>
+        </div>
+      </div>
+
+      <!-- Activate box -->
+      <div class="lic-activate-box">
+        <div class="lic-activate-title">🔑 Nhập License Key</div>
+        <input class="lic-key-input" id="lic-key-input" type="text"
+          placeholder="SO-XXXX-XXXX-XXXX-XXXX-XXXX"
+          oninput="onKeyInput(this)"
+          onkeydown="if(event.key==='Enter') doActivate()">
+        <div class="lic-result" id="lic-result"></div>
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <button class="btn btn-primary" onclick="doActivate()" id="btn-activate">✅ Kích hoạt</button>
+          <button class="btn btn-ghost" onclick="licCopyMachineId()">📋 Copy Machine ID</button>
+        </div>
+      </div>
+
+      <!-- How to get key -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;font-size:12px;color:var(--text-dim);line-height:1.8;margin-bottom:8px">
+        <div style="font-weight:700;color:var(--text);margin-bottom:8px">📖 Cách nhận key</div>
+        <div>1. Copy <strong>Machine ID</strong> ở trên</div>
+        <div>2. Liên hệ: <strong style="color:var(--text)">0797 899 666</strong> (Zalo/SMS)</div>
+        <div>3. Gửi Machine ID → nhận key trong vòng 24h</div>
+        <div style="margin-top:8px;color:var(--text-dimmer)">Key có thời hạn 30 / 90 / 365 ngày tùy gói.</div>
+      </div>
     </div>
-    <div class="lic-info-box">
-      <div class="lic-info-label">Hết hạn ngày</div>
-      <div class="lic-info-val" id="lic-expiry">—</div>
-    </div>
-    <div class="lic-info-box" style="grid-column:1/-1">
-      <div class="lic-info-label">Machine ID (gửi cho nhà phát triển để nhận key)</div>
-      <div class="lic-info-val" id="lic-machine" style="font-size:11px;color:var(--text-dim)">—</div>
-    </div>
-  </div>
+    <!-- ─── END LICENSE SECTION ────────────────────────────────── -->
 
-  <!-- Activate box -->
-  <div class="lic-activate-box">
-    <div class="lic-activate-title">🔑 Nhập License Key</div>
-    <input class="lic-key-input" id="lic-key-input" type="text"
-      placeholder="SO-XXXX-XXXX-XXXX-XXXX-XXXX"
-      oninput="onKeyInput(this)"
-      onkeydown="if(event.key==='Enter') doActivate()">
-    <div class="lic-result" id="lic-result"></div>
-    <div style="display:flex;gap:8px;margin-top:12px">
-      <button class="btn btn-primary" onclick="doActivate()" id="btn-activate">✅ Kích hoạt</button>
-      <button class="btn btn-ghost" onclick="licCopyMachineId()">📋 Copy Machine ID</button>
-    </div>
   </div>
-
-  <!-- How to get key -->
-  <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;font-size:12px;color:var(--text-dim);line-height:1.8">
-    <div style="font-weight:700;color:var(--text);margin-bottom:8px">📖 Cách nhận key</div>
-    <div>1. Copy <strong>Machine ID</strong> ở trên</div>
-    <div>2. Liên hệ: <strong style="color:var(--text)">0797 899 666</strong> (Zalo/SMS)</div>
-    <div>3. Gửi Machine ID → nhận key trong vòng 24h</div>
-    <div style="margin-top:8px;color:var(--text-dimmer)">Key có thời hạn 30 / 90 / 365 ngày tùy gói.</div>
-  </div>
-
-</div>
 </div>
 
 <!-- TERMINAL -->
@@ -729,7 +727,7 @@ function switchTab(name, btn){
   if(name==='monitor') startMonitor();
   else stopMonitor();
   if(name==='ports' && !portsData.length) loadPorts();
-  if(name==='license') loadLicense();
+  if(name==='about') loadLicense();
 }
 
 // ═══════════════════════════════════════ PLATFORM ════════════
@@ -1402,7 +1400,7 @@ function checkLicenseBanner(d){
   div.id = 'lic-expired-banner';
   div.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:500;background:var(--red-bg);border-top:1px solid var(--red-border);padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px';
   div.innerHTML = `<div style="color:var(--red);font-size:12px;font-weight:600">🔒 Phiên dùng thử đã hết hạn. Nhập key để tiếp tục sử dụng đầy đủ tính năng.</div>
-    <button class="btn btn-danger btn-sm" onclick="switchTab('license',q('#tab-license'))">🔑 Nhập Key ngay</button>`;
+    <button class="btn btn-danger btn-sm" onclick="switchTab('about',q('#tab-about'))">🔑 Nhập Key ngay</button>`;
   document.body.appendChild(div);
 }
 

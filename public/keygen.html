@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🔑 Key Generator — Storage Optimizer</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#111113;--surface:#1c1c1e;--surface2:#232325;--surface3:#2a2a2d;
+  --border:#2d2d30;--border2:#3a3a3e;
+  --text:#e5e5ea;--text-dim:#8e8e93;--text-dimmer:#48484a;
+  --red:#ff453a;--red-bg:rgba(255,69,58,.13);--red-border:rgba(255,69,58,.28);
+  --amber:#ff9f0a;--amber-bg:rgba(255,159,10,.12);--amber-border:rgba(255,159,10,.28);
+  --blue:#0a84ff;--blue-bg:rgba(10,132,255,.12);--blue-border:rgba(10,132,255,.28);
+  --green:#30d158;--green-bg:rgba(48,209,88,.12);--green-border:rgba(48,209,88,.28);
+  --purple:#bf5af2;--purple-bg:rgba(191,90,242,.12);--purple-border:rgba(191,90,242,.28);
+  --radius:12px;--radius-sm:8px;--radius-xs:5px;
+}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",sans-serif;font-size:13px;line-height:1.5;min-height:100vh;padding-bottom:40px}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#3a3a3e;border-radius:3px}
+
+/* ─── HEADER ─── */
+.header{background:rgba(17,17,19,.95);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0 28px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.header-brand{display:flex;align-items:center;gap:10px}
+.header-icon{font-size:22px}
+.header-title{font-size:15px;font-weight:800;letter-spacing:-.4px}
+.header-sub{font-size:10px;color:var(--text-dimmer);margin-top:1px}
+.header-nav{display:flex;gap:6px;align-items:center}
+.nav-link{font-size:11px;font-weight:600;color:var(--text-dim);padding:5px 12px;border-radius:6px;text-decoration:none;border:1px solid transparent;transition:all .12s}
+.nav-link:hover{background:var(--surface2);color:var(--text)}
+.nav-link.active{background:var(--purple-bg);color:var(--purple);border-color:var(--purple-border)}
+
+/* ─── LAYOUT ─── */
+.wrap{max-width:800px;margin:0 auto;padding:28px 24px}
+.page-title{font-size:22px;font-weight:800;letter-spacing:-.6px;margin-bottom:4px}
+.page-sub{font-size:12px;color:var(--text-dim);margin-bottom:28px}
+
+/* ─── CARDS ─── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:16px}
+.card-title{font-size:13px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.card-title-icon{font-size:16px}
+
+/* ─── FORM ─── */
+.form-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px}
+.form-group{display:flex;flex-direction:column;gap:5px}
+.form-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--text-dimmer)}
+.form-input,select{width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:9px 12px;font-family:inherit;font-size:13px;color:var(--text);outline:none;transition:border-color .12s}
+.form-input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 2px var(--blue-bg)}
+select option{background:var(--surface2)}
+.form-check{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-dim);cursor:pointer;padding:4px 0}
+.form-check input[type=checkbox]{width:16px;height:16px;accent-color:var(--blue);cursor:pointer}
+
+/* ─── BUTTONS ─── */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:8px 16px;border-radius:var(--radius-xs);border:1px solid transparent;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;transition:all .12s;white-space:nowrap;line-height:1;user-select:none}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+.btn-primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+.btn-primary:hover:not(:disabled){background:#0071e3}
+.btn-danger{background:var(--red-bg);color:var(--red);border-color:var(--red-border)}
+.btn-danger:hover:not(:disabled){background:rgba(255,69,58,.22)}
+.btn-green{background:var(--green-bg);color:var(--green);border-color:var(--green-border)}
+.btn-green:hover:not(:disabled){background:rgba(48,209,88,.22)}
+.btn-ghost{background:transparent;color:var(--text-dim);border-color:var(--border2)}
+.btn-ghost:hover:not(:disabled){background:var(--surface2);color:var(--text)}
+.btn-subtle{background:var(--surface2);color:var(--text-dim);border-color:var(--border)}
+.btn-subtle:hover:not(:disabled){background:var(--surface3);color:var(--text)}
+.btn-purple{background:var(--purple-bg);color:var(--purple);border-color:var(--purple-border)}
+.btn-purple:hover:not(:disabled){background:rgba(191,90,242,.22)}
+.btn-sm{padding:5px 11px;font-size:11px}
+.btn-xs{padding:3px 8px;font-size:10px}
+
+/* ─── GEN BUTTON ─── */
+.gen-btn-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+
+/* ─── KEYS LIST ─── */
+.keys-section{margin-top:16px}
+.keys-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px}
+.keys-count{font-size:11px;color:var(--text-dim)}
+.keys-actions{display:flex;gap:6px}
+.key-item{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;gap:10px;transition:border-color .12s}
+.key-item:hover{border-color:var(--border2)}
+.key-num{font-size:10px;font-weight:700;color:var(--text-dimmer);min-width:24px;flex-shrink:0}
+.key-val{font-family:"SF Mono","JetBrains Mono",monospace;font-size:13px;font-weight:600;letter-spacing:.5px;color:var(--green);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.key-copy-btn{flex-shrink:0}
+.key-copy-btn.copied{color:var(--green);border-color:var(--green-border);background:var(--green-bg)}
+
+/* ─── TAGS ─── */
+.tag{display:inline-flex;align-items:center;gap:4px;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px}
+.tag-personal{background:var(--blue-bg);color:var(--blue)}
+.tag-business{background:var(--amber-bg);color:var(--amber)}
+.tag-lifetime{background:var(--purple-bg);color:var(--purple)}
+
+/* ─── RESULT BOXES ─── */
+.result-box{padding:10px 14px;border-radius:var(--radius-sm);font-size:12px;margin-top:10px;display:none;line-height:1.7}
+.result-box.show{display:block}
+.result-ok{background:var(--green-bg);border:1px solid var(--green-border);color:var(--green)}
+.result-err{background:var(--red-bg);border:1px solid var(--red-border);color:var(--red)}
+.result-warn{background:var(--amber-bg);border:1px solid var(--amber-border);color:var(--amber)}
+.result-info{background:var(--blue-bg);border:1px solid var(--blue-border);color:var(--blue)}
+
+/* ─── VERIFY ─── */
+.verify-row{display:flex;gap:8px}
+.verify-input{flex:1;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:9px 12px;font-family:"SF Mono",monospace;font-size:13px;color:var(--text);outline:none;letter-spacing:1px;transition:border-color .12s}
+.verify-input:focus{border-color:var(--blue);box-shadow:0 0 0 2px var(--blue-bg)}
+.verify-input.ok{border-color:var(--green)}
+.verify-input.err{border-color:var(--red)}
+
+/* ─── HISTORY ─── */
+.history-box{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);font-family:"SF Mono",monospace;font-size:11px;color:var(--text-dim);padding:12px;white-space:pre;overflow:auto;max-height:320px;line-height:1.8}
+
+/* ─── STATS ROW ─── */
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px}
+.stat-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 16px;text-align:center}
+.stat-val{font-size:22px;font-weight:800;letter-spacing:-1px;margin-bottom:3px}
+.stat-lbl{font-size:10px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px}
+
+/* ─── SPINNER ─── */
+.spinner{width:14px;height:14px;border:2px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;display:inline-block;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ─── TOAST ─── */
+.toast{position:fixed;top:70px;left:50%;transform:translateX(-50%);background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:8px 18px;font-size:12px;font-weight:600;color:var(--green);box-shadow:0 8px 32px rgba(0,0,0,.5);z-index:999;animation:toastIn .2s ease;pointer-events:none}
+@keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(-8px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+
+/* ─── SECTION HDR ─── */
+.section-hdr{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--text-dimmer);margin:24px 0 12px;display:flex;align-items:center;gap:8px}
+.section-hdr::after{content:'';flex:1;height:1px;background:var(--border)}
+.section-hdr span{white-space:nowrap}
+
+/* ─── DIVIDER ─── */
+.divider{height:1px;background:var(--border);margin:20px 0}
+
+@media(max-width:600px){
+  .form-grid{grid-template-columns:1fr}
+  .stats-row{grid-template-columns:1fr 1fr}
+  .verify-row{flex-direction:column}
+  .wrap{padding:20px 14px}
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="header-brand">
+    <span class="header-icon">🔑</span>
+    <div>
+      <div class="header-title">Key Generator</div>
+      <div class="header-sub">Storage Optimizer — Developer Tool</div>
+    </div>
+  </div>
+  <nav class="header-nav">
+    <a class="nav-link" href="/">← Về ứng dụng</a>
+    <span class="nav-link active">🔑 Keygen</span>
+  </nav>
+</header>
+
+<!-- MAIN -->
+<div class="wrap">
+  <div class="page-title">🔑 License Key Generator</div>
+  <div class="page-sub">Công cụ tạo và kiểm tra license key cho Storage Optimizer</div>
+
+  <!-- Stats row -->
+  <div class="stats-row">
+    <div class="stat-box">
+      <div class="stat-val" id="stat-session" style="color:var(--green)">0</div>
+      <div class="stat-lbl">Key đã tạo (phiên này)</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-val" id="stat-total" style="color:var(--blue)">—</div>
+      <div class="stat-lbl">Tổng key đã lưu</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-val" id="stat-file" style="color:var(--text-dim);font-size:11px;letter-spacing:0">—</div>
+      <div class="stat-lbl">File lưu trữ</div>
+    </div>
+  </div>
+
+  <!-- ─── GENERATE CARD ─── -->
+  <div class="card">
+    <div class="card-title"><span class="card-title-icon">⚡</span> Tạo Key mới</div>
+
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="form-label">Loại License</label>
+        <select id="key-type" onchange="onTypeChange()">
+          <option value="personal">Personal</option>
+          <option value="business">Business</option>
+          <option value="lifetime">Lifetime</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Số ngày</label>
+        <input class="form-input" type="number" id="key-days" value="30" min="1" max="36500">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Số lượng (batch)</label>
+        <input class="form-input" type="number" id="key-batch" value="1" min="1" max="100">
+      </div>
+    </div>
+
+    <!-- Quick presets -->
+    <div style="margin-bottom:14px">
+      <div class="form-label" style="margin-bottom:6px">Preset nhanh</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn btn-subtle btn-sm" onclick="setPreset('personal',30)">Personal 30 ngày</button>
+        <button class="btn btn-subtle btn-sm" onclick="setPreset('personal',90)">Personal 90 ngày</button>
+        <button class="btn btn-subtle btn-sm" onclick="setPreset('business',365)">Business 1 năm</button>
+        <button class="btn btn-subtle btn-sm" onclick="setPreset('lifetime',36500)">Lifetime ∞</button>
+        <button class="btn btn-subtle btn-sm" onclick="setPreset('personal',7)">Trial 7 ngày</button>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <label class="form-check" style="margin-bottom:14px">
+      <input type="checkbox" id="auto-save" checked>
+      💾 Tự động lưu key vào file <code style="font-size:11px;color:var(--text-dim)">generated-keys.txt</code>
+    </label>
+
+    <div class="gen-btn-row">
+      <button class="btn btn-primary" id="btn-generate" onclick="generateKeys()" style="padding:10px 22px;font-size:13px">
+        ⚡ Tạo Key
+      </button>
+      <div id="gen-msg" style="font-size:11px;color:var(--text-dim)"></div>
+    </div>
+
+    <!-- Keys output -->
+    <div class="keys-section" id="keys-section" style="display:none">
+      <div class="divider"></div>
+      <div class="keys-header">
+        <div>
+          <span class="keys-count" id="keys-count"></span>
+          <span class="tag" id="keys-tag" style="margin-left:8px"></span>
+        </div>
+        <div class="keys-actions">
+          <button class="btn btn-ghost btn-sm" onclick="copyAllKeys()">📋 Copy tất cả</button>
+          <button class="btn btn-green btn-sm" onclick="downloadTxt()">💾 Tải TXT</button>
+        </div>
+      </div>
+      <div id="keys-list"></div>
+    </div>
+  </div>
+
+  <!-- ─── VERIFY CARD ─── -->
+  <div class="card">
+    <div class="card-title"><span class="card-title-icon">🔍</span> Kiểm tra Key</div>
+    <div class="verify-row">
+      <input class="verify-input" id="verify-input" type="text"
+        placeholder="SO-XXXX-XXXX-XXXX-XXXX-XXXX"
+        oninput="onVerifyInput(this)"
+        onkeydown="if(event.key==='Enter') doVerify()">
+      <button class="btn btn-primary" onclick="doVerify()" id="btn-verify">🔍 Kiểm tra</button>
+    </div>
+    <div id="verify-result" class="result-box"></div>
+  </div>
+
+  <!-- ─── HISTORY CARD ─── -->
+  <div class="card">
+    <div class="card-title">
+      <span class="card-title-icon">📜</span> Lịch sử key đã tạo (generated-keys.txt)
+      <button class="btn btn-ghost btn-xs" onclick="loadHistory()" style="margin-left:auto">↻ Tải lại</button>
+      <button class="btn btn-subtle btn-xs" onclick="copyHistory()">📋 Copy</button>
+    </div>
+    <div id="history-box" class="history-box">Đang tải...</div>
+  </div>
+</div>
+
+<script>
+// ─── STATE ───────────────────────────────────────────────────────────────────
+let _sessionKeys = [];
+let _lastKeys = [];
+let _lastType = 'personal';
+let _lastDays = 30;
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+async function init() {
+  await loadHistory();
+}
+init();
+
+// ─── PRESETS ──────────────────────────────────────────────────────────────────
+function setPreset(type, days) {
+  document.getElementById('key-type').value = type;
+  document.getElementById('key-days').value = days;
+  onTypeChange();
+}
+
+function onTypeChange() {
+  const type = document.getElementById('key-type').value;
+  if (type === 'lifetime') {
+    document.getElementById('key-days').value = 36500;
+    document.getElementById('key-days').disabled = true;
+  } else {
+    document.getElementById('key-days').disabled = false;
+  }
+}
+
+// ─── GENERATE ────────────────────────────────────────────────────────────────
+async function generateKeys() {
+  const type  = document.getElementById('key-type').value;
+  const days  = parseInt(document.getElementById('key-days').value) || 30;
+  const batch = parseInt(document.getElementById('key-batch').value) || 1;
+  const save  = document.getElementById('auto-save').checked;
+
+  const btn = document.getElementById('btn-generate');
+  const msg = document.getElementById('gen-msg');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Đang tạo...';
+  msg.textContent = '';
+
+  try {
+    const r = await fetch('/api/keygen/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ days, type, batch, save })
+    });
+    const data = await r.json();
+
+    if (data.ok) {
+      _lastKeys = data.keys;
+      _lastType = type;
+      _lastDays = days;
+      _sessionKeys.push(...data.keys);
+      document.getElementById('stat-session').textContent = _sessionKeys.length;
+      renderKeys(data.keys, type, days);
+      msg.style.color = 'var(--green)';
+      msg.textContent = '✅ ' + data.message;
+      showToast('✅ Đã tạo ' + data.keys.length + ' key!');
+      if (save) await loadHistory();
+    } else {
+      msg.style.color = 'var(--red)';
+      msg.textContent = '❌ ' + data.message;
+    }
+  } catch(e) {
+    msg.style.color = 'var(--red)';
+    msg.textContent = '❌ Lỗi kết nối: ' + e.message;
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '⚡ Tạo Key';
+}
+
+function renderKeys(keys, type, days) {
+  const section = document.getElementById('keys-section');
+  const list    = document.getElementById('keys-list');
+  const count   = document.getElementById('keys-count');
+  const tag     = document.getElementById('keys-tag');
+
+  count.textContent = keys.length + ' key — ' + type + ' — ' + days + ' ngày';
+  tag.className = 'tag tag-' + type;
+  tag.textContent = type;
+
+  list.innerHTML = keys.map((k, i) => `
+    <div class="key-item" id="ki-${i}">
+      <span class="key-num">${String(i+1).padStart(2,'0')}.</span>
+      <span class="key-val">${k}</span>
+      <button class="btn btn-ghost btn-xs key-copy-btn" onclick="copyKey('${k}', this)">📋 Copy</button>
+    </div>
+  `).join('');
+
+  section.style.display = 'block';
+  section.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+async function copyKey(key, btn) {
+  await navigator.clipboard.writeText(key);
+  btn.textContent = '✓';
+  btn.classList.add('copied');
+  setTimeout(() => { btn.textContent = '📋 Copy'; btn.classList.remove('copied'); }, 1800);
+}
+
+async function copyAllKeys() {
+  if (!_lastKeys.length) return;
+  await navigator.clipboard.writeText(_lastKeys.join('\n'));
+  showToast('✅ Đã copy ' + _lastKeys.length + ' key!');
+}
+
+function downloadTxt() {
+  if (!_lastKeys.length) return;
+  const now = new Date().toLocaleString('vi-VN').replace(/[\/\s:,]+/g,'_');
+  const content = `# Storage Optimizer Keys — ${new Date().toLocaleString('vi-VN')}\n# Type: ${_lastType} | Days: ${_lastDays}\n\n` +
+    _lastKeys.map((k, i) => `${String(i+1).padStart(3,'0')}. ${k}`).join('\n') + '\n';
+  const blob = new Blob([content], { type: 'text/plain' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `so-keys-${now}.txt`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// ─── VERIFY ──────────────────────────────────────────────────────────────────
+function onVerifyInput(el) {
+  el.classList.remove('ok', 'err');
+  const res = document.getElementById('verify-result');
+  res.className = 'result-box';
+
+  // Auto-format key
+  let v = el.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (v.startsWith('SO')) v = v.slice(2);
+  const parts = [];
+  for (let i = 0; i < v.length && parts.length < 5; i += 4) parts.push(v.slice(i, i+4));
+  el.value = 'SO-' + parts.join('-');
+}
+
+async function doVerify() {
+  const input = document.getElementById('verify-input');
+  const res   = document.getElementById('verify-result');
+  const key   = input.value.trim();
+  if (!key || key.length < 10) { input.classList.add('err'); return; }
+
+  const btn = document.getElementById('btn-verify');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>';
+
+  try {
+    const r = await fetch('/api/keygen/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key })
+    });
+    const data = await r.json();
+
+    if (!data.valid) {
+      input.classList.add('err');
+      res.className = 'result-box show result-err';
+      res.textContent = '❌ Key không hợp lệ — ' + (data.reason || 'Chữ ký sai');
+    } else if (data.expired) {
+      input.classList.add('err');
+      res.className = 'result-box show result-warn';
+      res.innerHTML = `⚠️ Key hợp lệ nhưng <strong>đã hết hạn</strong><br>
+        Loại: ${data.licenseType} &nbsp;|&nbsp;
+        Hết hạn: ${data.expiryDate} &nbsp;|&nbsp;
+        Còn lại: <strong>0 ngày</strong>`;
+    } else {
+      input.classList.add('ok');
+      res.className = 'result-box show result-ok';
+      res.innerHTML = `✅ Key hợp lệ!<br>
+        Loại: <strong>${data.licenseType}</strong> &nbsp;|&nbsp;
+        Hết hạn: <strong>${data.expiryDate}</strong> &nbsp;|&nbsp;
+        Còn lại: <strong>${data.daysLeft} ngày</strong>`;
+    }
+  } catch(e) {
+    res.className = 'result-box show result-err';
+    res.textContent = '❌ Lỗi kết nối: ' + e.message;
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '🔍 Kiểm tra';
+}
+
+// ─── HISTORY ─────────────────────────────────────────────────────────────────
+async function loadHistory() {
+  const box = document.getElementById('history-box');
+  try {
+    const r = await fetch('/api/keygen/keys-file');
+    const data = await r.json();
+    const content = data.content || '';
+    box.textContent = content || '(Chưa có key nào được lưu)';
+
+    // Update stats
+    const keyLines = content.split('\n').filter(l => /^\s*\d+\.\s+SO-/.test(l));
+    document.getElementById('stat-total').textContent = keyLines.length;
+
+    // Shorten path for display
+    const p = data.path || '—';
+    const shortPath = p.length > 40 ? '...' + p.slice(-37) : p;
+    document.getElementById('stat-file').textContent = shortPath;
+    document.getElementById('stat-file').title = p;
+  } catch {
+    box.textContent = '(Không thể tải lịch sử)';
+  }
+}
+
+async function copyHistory() {
+  const content = document.getElementById('history-box').textContent;
+  if (!content || content.startsWith('(')) return;
+  await navigator.clipboard.writeText(content);
+  showToast('✅ Đã copy lịch sử!');
+}
+
+// ─── UTILS ───────────────────────────────────────────────────────────────────
+function showToast(msg) {
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 2200);
+}
+</script>
+</body>
+</html>

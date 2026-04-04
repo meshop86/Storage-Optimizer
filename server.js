@@ -293,6 +293,21 @@ function detect3uToolsPath(sub) {
 const _3U_FIRMWARE = IS_WIN ? detect3uToolsPath("Firmware") : "";
 const _3U_BACKUP   = IS_WIN ? detect3uToolsPath("Backup")   : "";
 
+// ── Auto-detect Zalo data path ───────────────────────────────────────────────────────
+function detectZaloPath(sub) {
+  const bases = [
+    path.join(LOCALAPPDATA, "Zalo"),
+    path.join(LOCALAPPDATA, "ZaloPC"),
+  ];
+  const base = bases.find(b => { try { return fs.existsSync(b); } catch { return false; } }) || bases[0];
+  return sub ? path.join(base, sub) : base;
+}
+const ZALO_LOCAL     = IS_WIN ? detectZaloPath()              : "";
+const ZALO_CACHE     = IS_WIN ? detectZaloPath("Cache")       : "";
+const ZALO_GPU_CACHE = IS_WIN ? detectZaloPath("GPUCache")    : "";
+const ZALO_BLOB      = IS_WIN ? detectZaloPath("blob_storage"): "";
+const ZALO_CODE_CACHE= IS_WIN ? detectZaloPath("Code Cache")  : "";
+
 const CATALOG_WIN = [
   // ── SYSTEM TEMP ──
   {
@@ -559,6 +574,58 @@ const CATALOG_WIN = [
     description: "Một số phiên bản 3uTools lưu firmware tại thư mục Public thay vì thư mục user. Hay bị bỏ sót khi dọn dẹp.",
     consequence: "Xóa an toàn. 3uTools tải lại khi cần.",
     tip: "Kiểm tra cả hai vị trí 3uTools Firmware để không bỏ sót.",
+  },
+  // ── ZALO ──
+  {
+    id: "zalo-cache-win",
+    label: "Zalo Cache",
+    path: ZALO_CACHE,
+    action: "delete", category: "zalo", icon: "💬", safetyLevel: "safe",
+    title: "Cache trình duyệt của Zalo (Electron/Chromium)",
+    description: "Zalo dựa trên Electron/Chromium nên lưu cache HTML, CSS, JS, hình ảnh giống Chrome. Thư mục này có thể tích lũy 200MB – 2GB theo thời gian. Hoàn toàn không chứa tin nhắn, file đã nhận hay dữ liệu cá nhân.",
+    consequence: "Zalo tải lại cache từ server khi mở. Tin nhắn, danh bạ, lịch sử chat và file đã nhận không bị ảnh hưởng.",
+    tip: "Nên đóng Zalo hoàn toàn trước khi xóa. An toàn 100%.",
+  },
+  {
+    id: "zalo-gpu-cache-win",
+    label: "Zalo GPU Cache",
+    path: ZALO_GPU_CACHE,
+    action: "delete", category: "zalo", icon: "🎮", safetyLevel: "safe",
+    title: "Cache GPU shader của Zalo",
+    description: "Chromium lưu compiled GPU shader để tăng tốc render giao diện. Xuất hiện trên mọi máy cài Zalo và tích lũy theo thời gian.",
+    consequence: "Zalo tái tạo GPU cache khi khởi động lại. Không ảnh hưởng dữ liệu.",
+    tip: "An toàn xóa bất cứ lúc nào.",
+  },
+  {
+    id: "zalo-blob-win",
+    label: "Zalo Blob Storage",
+    path: ZALO_BLOB,
+    action: "delete", category: "zalo", icon: "🗄️", safetyLevel: "safe",
+    title: "Blob storage tạm của Zalo",
+    description: "Chromium lưu dữ liệu tạm dạng blob (hình ảnh, video nhớ...) trong quá trình chạy. Được tạo lại hoàn toàn tự động.",
+    consequence: "Zalo tạo lại khi khởi động. Không mất dữ liệu.",
+    tip: "An toàn xóa.",
+  },
+  {
+    id: "zalo-code-cache-win",
+    label: "Zalo Code Cache",
+    path: ZALO_CODE_CACHE,
+    action: "delete", category: "zalo", icon: "⚡", safetyLevel: "safe",
+    title: "Cache JavaScript biên dịch của Zalo",
+    description: "V8 engine lưu mã JS đã biên dịch sẵn để khởi động nhanh hơn. Được tái tạo tự động mỗi lần cập nhật Zalo.",
+    consequence: "Zalo khởi động chậm hơn vài giây lần đầu. Không ảnh hưởng dữ liệu.",
+    tip: "An toàn xóa.",
+  },
+  {
+    id: "zalo-data-move-win",
+    label: "Zalo AppData → Chuyển ổ khác (Junction)",
+    path: ZALO_LOCAL,
+    action: "move", category: "zalo", icon: "💬", safetyLevel: "movable",
+    title: "Chuyển toàn bộ Zalo data sang ổ D: bằng Junction Point",
+    description: "Di chuyển toàn bộ thư mục Zalo (cache + session + data) sang ổ D: rồi tạo Junction Point (Windows symbolic link cho thư mục). Windows tự chuyển hướng mọi truy cập — Zalo hoàn toàn không biết sự khác biệt. Tương đương tính năng 'Đổi nơi lưu trữ' trong cài đặt Zalo nhưng áp dụng cho toàn bộ AppData.",
+    consequence: "Zalo hoạt động bình thường 100% sau khi chuyển. Junction point trong suốt với mọi ứng dụng. Đóng Zalo trước khi thực hiện là bắt buộc.",
+    tip: "⚠️ Yêu cầu có ổ D:. Đóng Zalo trước. Junction point không cần quyền admin. Backup thư mục gốc lần đầu để an toàn.",
+    moveTarget: `D:\\.system-offload\\zalo`,
   },
 ];
 
@@ -1160,6 +1227,60 @@ app.post("/api/tray/stop", (_, res) => {
   res.json({ ok:true, msg:"stopped" });
 });
 
+// ─── KEYGEN API ──────────────────────────────────────────────────────────────
+
+const { genKey, verifyKey } = require("./keygen");
+const KEYS_FILE = path.join(__dirname, "generated-keys.txt");
+
+app.post("/api/keygen/generate", (req, res) => {
+  const { days = 30, type = "personal", batch = 1, save = true } = req.body || {};
+  const TYPES = { personal: true, business: true, lifetime: true };
+
+  if (!TYPES[type]) {
+    return res.status(400).json({ ok: false, message: "Loại không hợp lệ: personal | business | lifetime" });
+  }
+  const d = Math.max(1, Math.min(36500, parseInt(days) || 30));
+  const b = Math.max(1, Math.min(100, parseInt(batch) || 1));
+
+  const keys = [];
+  for (let i = 0; i < b; i++) {
+    keys.push(genKey(d, type));
+  }
+
+  if (save) {
+    const now = new Date().toLocaleString("vi-VN");
+    const lines = [
+      `\n# Generated: ${now} | Type: ${type} | Days: ${d} | Count: ${b}`,
+      ...keys.map((k, i) => `${String(i + 1).padStart(3, "0")}. ${k}`),
+    ];
+    try {
+      fs.appendFileSync(KEYS_FILE, lines.join("\n") + "\n", "utf8");
+    } catch (e) {
+      // non-fatal
+    }
+  }
+
+  res.json({ ok: true, keys, message: `Đã tạo ${b} key • ${type} • ${d} ngày${save ? " • Đã lưu TXT" : ""}` });
+});
+
+app.post("/api/keygen/verify", (req, res) => {
+  const { key } = req.body || {};
+  if (!key || typeof key !== "string") {
+    return res.status(400).json({ ok: false, message: "Thiếu key" });
+  }
+  const result = verifyKey(key.trim());
+  res.json(result);
+});
+
+app.get("/api/keygen/keys-file", (_req, res) => {
+  try {
+    const content = fs.existsSync(KEYS_FILE) ? fs.readFileSync(KEYS_FILE, "utf8") : "";
+    res.json({ ok: true, content, path: KEYS_FILE });
+  } catch {
+    res.json({ ok: false, content: "", path: KEYS_FILE });
+  }
+});
+
 // ─── LICENSE API ─────────────────────────────────────────────────────────────
 
 app.get("/api/license", (_req, res) => {
@@ -1174,9 +1295,10 @@ app.post("/api/license/activate", (req, res) => {
   res.json(license.activateKey(key));
 });
 
-// Middleware: chặn các API quan trọng nếu hết hạn (ngoại trừ /api/license)
+// Middleware: chặn các API quan trọng nếu hết hạn (ngoại trừ /api/license và /api/keygen)
 app.use("/api", (req, res, next) => {
   if (req.path.startsWith("/license")) return next();
+  if (req.path.startsWith("/keygen")) return next();
   if (!license.isAllowed()) {
     return res.status(402).json({
       error: "license_expired",
